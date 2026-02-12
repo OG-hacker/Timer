@@ -1,12 +1,11 @@
 {
   "name": "something-to-focus",
-  "version": "5.1.0",
+  "version": "1.1.0",
   "description": "Aesthetic offline Pomodoro productivity desktop app",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "pack:win": "npm run pack:portable",
-    "pack:portable": "electron-builder --win portable"
+    "pack:win": "electron-builder --win nsis portable"
   },
   "devDependencies": {
     "electron": "^31.7.7",
