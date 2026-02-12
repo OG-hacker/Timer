@@ -1,38 +1,40 @@
-# Something to Focus
+# Something to Focus (Build v5.2.0)
 
-An aesthetic, offline-first Pomodoro app with:
+## Included Features in this build
 
-- Unlimited color-coded projects
-- Custom focus/short/long/cycle settings
-- Auto-start focus/break automation
-- Per-project to-do lists
-- Weekly local-only statistics
-- Home screen + multiple visual themes
-- Electron desktop wrapper (Windows `.exe` packaging support)
+- 9 selectable themes (including Aurora + Rose Gold)
+- Fullscreen Focus View (timer-only circle overlay)
+- In-app EXE downloader from GitHub Releases
+- Daily goal tracker
+- Weekly statistics chart
+- Keyboard shortcuts (`Space`, `R`, `S`, `F`)
+- Build/version badge visible in app UI
+- New **Reset Local Data** button for stale-state troubleshooting
 
-## Run in browser
+## Windows EXE build (fresh every run)
 
-```bash
-python3 -m http.server 4173
-# open http://localhost:4173
+Use `Build-EXE-and-Run.bat` (recommended). It now:
+1. Cleans old `dist/`
+2. Installs dependencies
+3. Builds a fresh portable `.exe`
+4. Launches the newest `.exe` from `dist/`
+
+Build-only option:
+
+```bat
+scripts\build-windows.bat
 ```
 
-## Run as desktop app
+## If you still see stale version
 
-```bash
-npm install
-npm start
-```
+1. In app, confirm badge says **Build v5.2.0**.
+2. Use **Reset Local Data** in the app.
+3. Close all old instances and launch only the newest file in `dist/`.
+4. If needed, delete older downloaded folders/zip extracts to avoid opening the wrong exe.
 
-## Build Windows `.exe`
+## In-app update download
 
-```bash
-npm install
-npm run pack:win
-```
-
-Artifacts are generated in `dist/`.
-
-> Note: Building a Windows installer from Linux may require Wine/extra system tooling. Running the same command on Windows is recommended for the smoothest build.
-
-All user data remains local on-device (`localStorage`).
+In **In-App Updates** card:
+1. Set GitHub owner + repo
+2. Click **Download Latest .exe**
+3. App opens latest release exe download URL
