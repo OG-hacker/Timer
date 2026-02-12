@@ -1,15 +1,10 @@
-const STORAGE_KEY = "something-to-focus-v4";
+const STORAGE_KEY = "something-to-focus-v2";
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const THEMES = [
   { id: "default", label: "Midnight Neon" },
   { id: "sunrise", label: "Sunrise" },
   { id: "forest", label: "Forest" },
   { id: "mono", label: "Monochrome" },
-  { id: "ocean", label: "Ocean Depth" },
-  { id: "lavender", label: "Lavender Mist" },
-  { id: "solar", label: "Solar Dusk" },
-  { id: "aurora", label: "Aurora" },
-  { id: "rose", label: "Rose Gold" },
 ];
 
 const defaultProject = {
@@ -30,25 +25,15 @@ const ui = {
   appScreen: document.getElementById("app-screen"),
   enterAppBtn: document.getElementById("enter-app-btn"),
   themeSelect: document.getElementById("theme-select"),
-  goHomeBtn: document.getElementById("go-home-btn"),
-  zenBtn: document.getElementById("zen-btn"),
-  exitZenBtn: document.getElementById("exit-zen-btn"),
   projectList: document.getElementById("project-list"),
   activeProjectName: document.getElementById("active-project-name"),
   timeDisplay: document.getElementById("time-display"),
   sessionLabel: document.getElementById("session-label"),
   cycleDisplay: document.getElementById("cycle-display"),
-  zenTimeDisplay: document.getElementById("zen-time-display"),
-  zenSessionLabel: document.getElementById("zen-session-label"),
-  zenCycleDisplay: document.getElementById("zen-cycle-display"),
   startBtn: document.getElementById("start-btn"),
   pauseBtn: document.getElementById("pause-btn"),
   resetBtn: document.getElementById("reset-btn"),
   skipBtn: document.getElementById("skip-btn"),
-  zenStartBtn: document.getElementById("zen-start-btn"),
-  zenPauseBtn: document.getElementById("zen-pause-btn"),
-  zenResetBtn: document.getElementById("zen-reset-btn"),
-  zenSkipBtn: document.getElementById("zen-skip-btn"),
   focusMin: document.getElementById("focus-min"),
   shortMin: document.getElementById("short-min"),
   longMin: document.getElementById("long-min"),
@@ -63,21 +48,11 @@ const ui = {
   weeklyTotal: document.getElementById("weekly-total"),
   timerModes: document.getElementById("timer-modes"),
   ringProgress: document.getElementById("ring-progress"),
-  zenRingProgress: document.getElementById("zen-ring-progress"),
   newProjectBtn: document.getElementById("new-project-btn"),
   projectDialog: document.getElementById("project-dialog"),
   projectForm: document.getElementById("project-form"),
   projectNameInput: document.getElementById("project-name-input"),
   projectColorInput: document.getElementById("project-color-input"),
-  dailyGoalInput: document.getElementById("daily-goal-min"),
-  saveGoalBtn: document.getElementById("save-goal-btn"),
-  todayProgressText: document.getElementById("today-progress-text"),
-  todayProgressBar: document.getElementById("today-progress-bar"),
-  repoOwnerInput: document.getElementById("repo-owner"),
-  repoNameInput: document.getElementById("repo-name"),
-  saveRepoBtn: document.getElementById("save-repo-btn"),
-  downloadLatestBtn: document.getElementById("download-latest-btn"),
-  updateStatus: document.getElementById("update-status"),
 };
 
 const modeMeta = { focus: { label: "Focus" }, short: { label: "Short Break" }, long: { label: "Long Break" } };
@@ -91,7 +66,7 @@ function init() {
   syncSettingsInputs();
   ensureRingMetrics();
   setTheme(state.theme);
-  setScreen("home");
+  setScreen(state.screen || "home");
   renderAll();
 }
 
@@ -101,18 +76,13 @@ function loadState() {
     if (!raw) return createInitialState();
     const parsed = JSON.parse(raw);
     if (!parsed.projects?.length) return createInitialState();
-    const activeProjectId = parsed.projects.some((p) => p.id === parsed.activeProjectId)
-      ? parsed.activeProjectId
-      : parsed.projects[0].id;
+    const activeProjectId = parsed.projects.some((p) => p.id === parsed.activeProjectId) ? parsed.activeProjectId : parsed.projects[0].id;
     return {
       projects: parsed.projects,
       activeProjectId,
       timer: parsed.timer || createTimerState(parsed.projects[0]),
       theme: parsed.theme || "default",
-      dailyGoalMin: Number(parsed.dailyGoalMin) > 0 ? parsed.dailyGoalMin : 180,
-      updateRepo: parsed.updateRepo || { owner: "", name: "" },
-      zenMode: false,
-      screen: "home",
+      screen: parsed.screen || "home",
     };
   } catch {
     return createInitialState();
@@ -125,9 +95,6 @@ function createInitialState() {
     activeProjectId: defaultProject.id,
     timer: createTimerState(defaultProject),
     theme: "default",
-    dailyGoalMin: 180,
-    updateRepo: { owner: "", name: "" },
-    zenMode: false,
     screen: "home",
   };
 }
@@ -145,27 +112,12 @@ function createTimerState(project) {
 
 function bindEvents() {
   ui.enterAppBtn.addEventListener("click", () => setScreen("app"));
-  ui.goHomeBtn.addEventListener("click", () => setScreen("home"));
   ui.themeSelect.addEventListener("change", () => setTheme(ui.themeSelect.value));
-  ui.zenBtn.addEventListener("click", toggleZenMode);
-  ui.exitZenBtn.addEventListener("click", () => setZenMode(false));
   ui.startBtn.addEventListener("click", startTimer);
   ui.pauseBtn.addEventListener("click", pauseTimer);
   ui.resetBtn.addEventListener("click", resetTimer);
   ui.skipBtn.addEventListener("click", () => transitionMode(true));
-  ui.zenStartBtn.addEventListener("click", startTimer);
-  ui.zenPauseBtn.addEventListener("click", pauseTimer);
-  ui.zenResetBtn.addEventListener("click", resetTimer);
-  ui.zenSkipBtn.addEventListener("click", () => transitionMode(true));
   ui.saveSettingsBtn.addEventListener("click", applySettings);
-  ui.saveGoalBtn.addEventListener("click", applyGoal);
-  ui.saveRepoBtn.addEventListener("click", saveRepoConfig);
-  ui.downloadLatestBtn.addEventListener("click", downloadLatestExe);
-
-  document.addEventListener("keydown", handleShortcuts);
-  document.addEventListener("fullscreenchange", () => {
-    if (!document.fullscreenElement) setZenMode(false, false);
-  });
 
   ui.todoForm.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -181,10 +133,7 @@ function bindEvents() {
 
   ui.projectForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    if (event.submitter?.value !== "confirm") {
-      ui.projectDialog.close();
-      return;
-    }
+    if (event.submitter?.value !== "confirm") return ui.projectDialog.close();
     const name = ui.projectNameInput.value.trim();
     if (!name) return;
 
@@ -196,7 +145,6 @@ function bindEvents() {
       todos: [],
       sessions: [],
     };
-
     state.projects.push(project);
     state.activeProjectId = project.id;
     state.timer = createTimerState(project);
@@ -209,21 +157,6 @@ function bindEvents() {
   });
 }
 
-function handleShortcuts(event) {
-  if (state.screen !== "app") return;
-  const tag = document.activeElement?.tagName;
-  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-
-  if (event.code === "Space") {
-    event.preventDefault();
-    if (state.timer.running) pauseTimer();
-    else startTimer();
-  }
-  if (event.key.toLowerCase() === "r") resetTimer();
-  if (event.key.toLowerCase() === "s") transitionMode(true);
-  if (event.key.toLowerCase() === "f") toggleZenMode();
-}
-
 function setScreen(screen) {
   state.screen = screen;
   ui.homeScreen.classList.toggle("active", screen === "home");
@@ -233,12 +166,12 @@ function setScreen(screen) {
 
 function populateThemes() {
   ui.themeSelect.innerHTML = "";
-  THEMES.forEach((theme) => {
+  for (const theme of THEMES) {
     const option = document.createElement("option");
     option.value = theme.id;
     option.textContent = theme.label;
     ui.themeSelect.appendChild(option);
-  });
+  }
 }
 
 function setTheme(themeId) {
@@ -281,12 +214,6 @@ function applySettings() {
   renderAll();
 }
 
-function applyGoal() {
-  state.dailyGoalMin = clampInt(ui.dailyGoalInput.value, 30, 1440, 180);
-  saveState();
-  renderGoal();
-}
-
 function syncSettingsInputs() {
   const s = getProject().settings;
   ui.focusMin.value = s.focusMin;
@@ -295,44 +222,6 @@ function syncSettingsInputs() {
   ui.cycles.value = s.cycles;
   ui.autoStartBreaks.checked = s.autoStartBreaks;
   ui.autoStartFocus.checked = s.autoStartFocus;
-  ui.dailyGoalInput.value = state.dailyGoalMin;
-  ui.repoOwnerInput.value = state.updateRepo.owner;
-  ui.repoNameInput.value = state.updateRepo.name;
-}
-
-function saveRepoConfig() {
-  state.updateRepo.owner = ui.repoOwnerInput.value.trim();
-  state.updateRepo.name = ui.repoNameInput.value.trim();
-  saveState();
-  ui.updateStatus.textContent = "Repo saved. Click Download Latest .exe when ready.";
-}
-
-async function downloadLatestExe() {
-  const owner = ui.repoOwnerInput.value.trim();
-  const name = ui.repoNameInput.value.trim();
-  if (!owner || !name) {
-    ui.updateStatus.textContent = "Please set both GitHub owner and repo name first.";
-    return;
-  }
-
-  state.updateRepo = { owner, name };
-  saveState();
-  ui.updateStatus.textContent = "Checking latest release...";
-
-  try {
-    const response = await fetch(`https://api.github.com/repos/${owner}/${name}/releases/latest`);
-    if (!response.ok) throw new Error(`GitHub API ${response.status}`);
-    const release = await response.json();
-    const exeAsset = (release.assets || []).find((asset) => /\.exe$/i.test(asset.name));
-    if (!exeAsset?.browser_download_url) {
-      ui.updateStatus.textContent = "No .exe asset found in latest release. Upload an exe to Releases first.";
-      return;
-    }
-    ui.updateStatus.textContent = `Opening download: ${exeAsset.name}`;
-    window.open(exeAsset.browser_download_url, "_blank");
-  } catch (error) {
-    ui.updateStatus.textContent = `Update download failed: ${error.message}`;
-  }
 }
 
 function setMode(mode) {
@@ -380,7 +269,6 @@ function transitionMode(manualSkip) {
   const project = getProject();
   if (state.timer.mode === "focus" && !manualSkip) {
     project.sessions.push({ date: new Date().toISOString(), minutes: Math.round(state.timer.durationMs / 60_000), mode: "focus" });
-    notify("Focus complete", `Great work on ${project.name}. Time for a break.`);
   }
 
   if (state.timer.mode === "focus") {
@@ -393,38 +281,8 @@ function transitionMode(manualSkip) {
   }
 
   renderAll();
-  const auto =
-    (state.timer.mode === "focus" && project.settings.autoStartFocus) ||
-    (state.timer.mode !== "focus" && project.settings.autoStartBreaks);
+  const auto = (state.timer.mode === "focus" && project.settings.autoStartFocus) || (state.timer.mode !== "focus" && project.settings.autoStartBreaks);
   if (auto) startTimer();
-}
-
-function notify(title, body) {
-  if (!("Notification" in window)) return;
-  if (Notification.permission === "granted") {
-    new Notification(title, { body });
-  } else if (Notification.permission !== "denied") {
-    Notification.requestPermission();
-  }
-}
-
-function setZenMode(enabled, syncFullscreen = true) {
-  state.zenMode = enabled;
-  document.body.classList.toggle("zen-mode", enabled);
-  ui.zenBtn.textContent = enabled ? "Exit Focus View" : "Focus View";
-
-  if (syncFullscreen) {
-    if (enabled && !document.fullscreenElement) {
-      document.documentElement.requestFullscreen?.().catch(() => {});
-    }
-    if (!enabled && document.fullscreenElement) {
-      document.exitFullscreen?.().catch(() => {});
-    }
-  }
-}
-
-function toggleZenMode() {
-  setZenMode(!state.zenMode);
 }
 
 function renderAll() {
@@ -432,7 +290,6 @@ function renderAll() {
   renderTimer();
   renderTodos();
   renderStats();
-  renderGoal();
 }
 
 function renderProjects() {
@@ -485,36 +342,20 @@ function renderProjects() {
 
 function renderTimer() {
   const p = getProject();
-  const time = formatTime(state.timer.remainingMs);
-  const cycle = `Cycle ${state.timer.currentCycle} / ${p.settings.cycles}`;
-  const label = modeMeta[state.timer.mode].label;
-
   ui.activeProjectName.textContent = p.name;
-  ui.sessionLabel.textContent = label;
-  ui.timeDisplay.textContent = time;
-  ui.cycleDisplay.textContent = cycle;
-  ui.zenSessionLabel.textContent = label;
-  ui.zenTimeDisplay.textContent = time;
-  ui.zenCycleDisplay.textContent = cycle;
-
+  ui.sessionLabel.textContent = modeMeta[state.timer.mode].label;
+  ui.timeDisplay.textContent = formatTime(state.timer.remainingMs);
+  ui.cycleDisplay.textContent = `Cycle ${state.timer.currentCycle} / ${p.settings.cycles}`;
   ui.startBtn.disabled = state.timer.running;
   ui.pauseBtn.disabled = !state.timer.running;
-  ui.zenStartBtn.disabled = state.timer.running;
-  ui.zenPauseBtn.disabled = !state.timer.running;
 
   ui.timerModes.querySelectorAll(".mode-btn").forEach((btn) => btn.classList.toggle("active", btn.dataset.mode === state.timer.mode));
-
   const r = Number(ui.ringProgress.getAttribute("r"));
   const c = 2 * Math.PI * r;
   const progress = 1 - state.timer.remainingMs / state.timer.durationMs;
-  const offset = `${c * (1 - progress)}`;
-
   ui.ringProgress.style.stroke = p.color;
   ui.ringProgress.style.strokeDasharray = `${c}`;
-  ui.ringProgress.style.strokeDashoffset = offset;
-  ui.zenRingProgress.style.stroke = p.color;
-  ui.zenRingProgress.style.strokeDasharray = `${c}`;
-  ui.zenRingProgress.style.strokeDashoffset = offset;
+  ui.ringProgress.style.strokeDashoffset = `${c * (1 - progress)}`;
 }
 
 function renderTodos() {
@@ -553,26 +394,6 @@ function renderTodos() {
     li.append(left, remove);
     ui.todoList.appendChild(li);
   });
-}
-
-function renderGoal() {
-  const focusedToday = getTodayFocusMinutes();
-  const pct = Math.min(100, Math.round((focusedToday / state.dailyGoalMin) * 100));
-  ui.todayProgressText.textContent = `${focusedToday} / ${state.dailyGoalMin} minutes today (${pct}%)`;
-  ui.todayProgressBar.value = pct;
-}
-
-function getTodayFocusMinutes() {
-  const now = new Date();
-  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  let total = 0;
-  state.projects.forEach((project) => {
-    project.sessions.forEach((session) => {
-      const t = new Date(session.date).getTime();
-      if (!Number.isNaN(t) && t >= dayStart) total += session.minutes;
-    });
-  });
-  return total;
 }
 
 function renderStats() {
@@ -638,10 +459,8 @@ function clampInt(value, min, max, fallback) {
 }
 
 function ensureRingMetrics() {
-  [ui.ringProgress, ui.zenRingProgress].forEach((ring) => {
-    const r = Number(ring.getAttribute("r"));
-    const c = 2 * Math.PI * r;
-    ring.style.strokeDasharray = `${c}`;
-    ring.style.strokeDashoffset = `${c}`;
-  });
+  const r = Number(ui.ringProgress.getAttribute("r"));
+  const c = 2 * Math.PI * r;
+  ui.ringProgress.style.strokeDasharray = `${c}`;
+  ui.ringProgress.style.strokeDashoffset = `${c}`;
 }
