@@ -1,0 +1,32 @@
+{
+  "name": "something-to-focus",
+  "version": "1.1.0",
+  "description": "Aesthetic offline Pomodoro productivity desktop app",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack:win": "electron-builder --win nsis portable"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.somethingtofocus.app",
+    "productName": "Something to Focus",
+    "files": [
+      "index.html",
+      "styles.css",
+      "app.js",
+      "main.js",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "artifactName": "Something-to-Focus-${version}-${arch}.${ext}"
+    }
+  }
+}
