@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Something to Focus</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="home-screen" class="screen active">
+      <div class="hero-card">
+        <p class="kicker">Something to Focus</p>
+        <p id="build-badge-home" class="build-badge">Build v5.1</p>
+        <h1>Focus beautifully. Offline. On your own terms.</h1>
+        <p class="subcopy">
+          Multi-project Pomodoro, smart automation, privacy-first storage, theme presets, and full-screen focus view.
+        </p>
+        <div class="home-actions"><button id="enter-app-btn" class="primary">Start Focusing</button></div>
+        <div class="feature-pills">
+          <span>Unlimited projects</span><span>Per-project tasks</span><span>Weekly insights</span><span>100% offline</span>
+        </div>
+
+        <div class="whats-new">
+          <h3>What's New in this build</h3>
+          <ul>
+            <li>9 themes (including Aurora + Rose Gold)</li>
+            <li>Fullscreen Focus View (timer-only)</li>
+            <li>In-app latest EXE downloader from GitHub Releases</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="app-screen" class="screen">
+      <div class="app-shell">
+        <aside class="panel projects-panel">
+          <div class="panel-header">
+            <h2>Projects</h2>
+            <button id="new-project-btn" class="icon-btn" title="New project">＋</button>
+          </div>
+          <ul id="project-list" class="project-list"></ul>
+        </aside>
+
+        <main class="panel timer-panel">
+          <header class="timer-header">
+            <div>
+              <p class="eyebrow">Now focusing</p>
+              <h1 id="active-project-name">No project selected</h1>
+            </div>
+            <div class="header-actions">
+              <button id="go-home-btn" class="chip">Home</button>
+              <button id="zen-btn" class="chip">Focus View</button>
+              <label class="theme-picker-wrap">Theme<select id="theme-select"></select></label>
+              <span id="build-badge-app" class="build-badge small">Build v5.1</span>
+              <span class="badge">100% Offline</span>
+            </div>
+          </header>
+
+          <div class="shortcut-hint">Shortcuts: <kbd>Space</kbd> start/pause · <kbd>R</kbd> reset · <kbd>S</kbd> skip · <kbd>F</kbd> focus view</div>
+
+          <div class="timer-modes" id="timer-modes"></div>
+
+          <section class="countdown-wrap">
+            <svg class="progress-ring" viewBox="0 0 220 220" aria-hidden="true">
+              <circle class="ring-bg" cx="110" cy="110" r="92" />
+              <circle id="ring-progress" class="ring-progress" cx="110" cy="110" r="92" />
+            </svg>
+            <div class="time-stack">
+              <p id="session-label" class="session-label">Focus</p>
+              <p id="time-display" class="time-display">25:00</p>
+              <p id="cycle-display" class="cycle-display">Cycle 1 / 4</p>
+            </div>
+          </section>
+
+          <section class="controls">
+            <button id="start-btn" class="primary">Start</button>
+            <button id="pause-btn">Pause</button>
+            <button id="reset-btn">Reset</button>
+            <button id="skip-btn">Skip</button>
+          </section>
+
+          <section class="grid four-col">
+            <article class="card">
+              <div class="card-header"><h3>Pomodoro Settings</h3><button id="save-settings-btn" class="chip">Save</button></div>
+              <div class="settings-grid">
+                <label>Focus (min)<input id="focus-min" type="number" min="1" max="180" /></label>
+                <label>Short break (min)<input id="short-min" type="number" min="1" max="60" /></label>
+                <label>Long break (min)<input id="long-min" type="number" min="1" max="90" /></label>
+                <label>Cycles<input id="cycles" type="number" min="1" max="12" /></label>
+              </div>
+              <div class="settings-grid toggles">
+                <label class="switch-row"><input id="auto-start-breaks" type="checkbox" />Auto-start breaks</label>
+                <label class="switch-row"><input id="auto-start-focus" type="checkbox" />Auto-start focus sessions</label>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-header">
+                <h3>Session Tasks</h3>
+                <form id="todo-form" class="inline-form">
+                  <input id="todo-input" type="text" placeholder="Add task..." maxlength="120" />
+                  <button type="submit" class="chip">Add</button>
+                </form>
+              </div>
+              <ul id="todo-list" class="todo-list"></ul>
+            </article>
+
+            <article class="card">
+              <div class="card-header"><h3>Daily Goal</h3><button id="save-goal-btn" class="chip">Set</button></div>
+              <label>Goal minutes<input id="daily-goal-min" type="number" min="30" max="1440" /></label>
+              <p id="today-progress-text" class="muted">0 / 180 minutes today (0%)</p>
+              <progress id="today-progress-bar" max="100" value="0"></progress>
+            </article>
+
+            <article class="card">
+              <div class="card-header"><h3>In-App Updates</h3><button id="save-repo-btn" class="chip">Save</button></div>
+              <label>GitHub owner<input id="repo-owner" placeholder="your-github-username" /></label>
+              <label>Repo name<input id="repo-name" placeholder="Something-to-Focus" /></label>
+              <div class="controls compact">
+                <button id="download-latest-btn" class="primary">Download Latest .exe</button>
+              </div>
+              <p id="update-status" class="muted">Set repo, then click download to fetch the latest release exe.</p>
+              <p class="muted tiny">If you still see old UI after updating, close app and relaunch the newest exe from Downloads/dist.</p>
+            </article>
+          
+            <article class="card">
+              <div class="card-header"><h3>Build & Troubleshooting</h3></div>
+              <p id="build-version-line" class="muted">Build: v0.0.0</p>
+              <p class="muted tiny">If changes look missing, click reset then restart the app from the newest dist exe.</p>
+              <div class="controls compact">
+                <button id="reset-local-data-btn">Reset Local Data</button>
+              </div>
+            </article>
+          </section>
+
+          <section class="card stats-card">
+            <div class="card-header"><h3>Weekly Focus Statistics</h3><p id="weekly-total" class="muted">0m this week</p></div>
+            <canvas id="stats-canvas" width="860" height="220"></canvas>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <section id="zen-overlay" class="zen-overlay" aria-hidden="true">
+      <button id="exit-zen-btn" class="chip">Exit</button>
+      <section class="countdown-wrap zen-countdown">
+        <svg class="progress-ring" viewBox="0 0 220 220" aria-hidden="true">
+          <circle class="ring-bg" cx="110" cy="110" r="92" />
+          <circle id="zen-ring-progress" class="ring-progress" cx="110" cy="110" r="92" />
+        </svg>
+        <div class="time-stack">
+          <p id="zen-session-label" class="session-label">Focus</p>
+          <p id="zen-time-display" class="time-display">25:00</p>
+          <p id="zen-cycle-display" class="cycle-display">Cycle 1 / 4</p>
+        </div>
+      </section>
+      <section class="controls zen-controls">
+        <button id="zen-start-btn" class="primary">Start</button>
+        <button id="zen-pause-btn">Pause</button>
+        <button id="zen-reset-btn">Reset</button>
+        <button id="zen-skip-btn">Skip</button>
+      </section>
+    </section>
+
+    <dialog id="project-dialog">
+      <form id="project-form" method="dialog" class="dialog-form">
+        <h3>Create Project</h3>
+        <label>Project name<input id="project-name-input" required maxlength="40" /></label>
+        <label>Color<input id="project-color-input" type="color" value="#7C5CFF" /></label>
+        <menu><button value="cancel">Cancel</button><button value="confirm" class="primary">Create</button></menu>
+      </form>
+    </dialog>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
