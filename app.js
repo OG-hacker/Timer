@@ -25,7 +25,6 @@ const ui = {
   appScreen: document.getElementById("app-screen"),
   enterAppBtn: document.getElementById("enter-app-btn"),
   themeSelect: document.getElementById("theme-select"),
-  goHomeBtn: document.getElementById("go-home-btn"),
   projectList: document.getElementById("project-list"),
   activeProjectName: document.getElementById("active-project-name"),
   timeDisplay: document.getElementById("time-display"),
@@ -67,7 +66,7 @@ function init() {
   syncSettingsInputs();
   ensureRingMetrics();
   setTheme(state.theme);
-  setScreen("home");
+  setScreen(state.screen || "home");
   renderAll();
 }
 
@@ -113,7 +112,6 @@ function createTimerState(project) {
 
 function bindEvents() {
   ui.enterAppBtn.addEventListener("click", () => setScreen("app"));
-  ui.goHomeBtn.addEventListener("click", () => setScreen("home"));
   ui.themeSelect.addEventListener("change", () => setTheme(ui.themeSelect.value));
   ui.startBtn.addEventListener("click", startTimer);
   ui.pauseBtn.addEventListener("click", pauseTimer);
