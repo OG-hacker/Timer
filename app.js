@@ -1,5 +1,5 @@
-const APP_VERSION = "5.2.0";
-const STORAGE_KEY = "something-to-focus-v7";
+const APP_VERSION = "5.3.0";
+const STORAGE_KEY = "something-to-focus-v8";
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const THEMES = [
   { id: "default", label: "Midnight Neon" },
@@ -32,6 +32,9 @@ const ui = {
   enterAppBtn: document.getElementById("enter-app-btn"),
   themeSelect: document.getElementById("theme-select"),
   goHomeBtn: document.getElementById("go-home-btn"),
+  openSettingsBtn: document.getElementById("open-settings-btn"),
+  closeSettingsBtn: document.getElementById("close-settings-btn"),
+  settingsDialog: document.getElementById("settings-dialog"),
   zenBtn: document.getElementById("zen-btn"),
   exitZenBtn: document.getElementById("exit-zen-btn"),
   projectList: document.getElementById("project-list"),
@@ -83,6 +86,8 @@ const ui = {
   buildBadgeApp: document.getElementById("build-badge-app"),
   buildVersionLine: document.getElementById("build-version-line"),
   resetLocalDataBtn: document.getElementById("reset-local-data-btn"),
+  tabButtons: Array.from(document.querySelectorAll(".tab-btn")),
+  settingsPanes: Array.from(document.querySelectorAll(".settings-pane")),
 };
 
 const modeMeta = { focus: { label: "Focus" }, short: { label: "Short Break" }, long: { label: "Long Break" } };
@@ -99,6 +104,7 @@ function init() {
   ui.buildBadgeHome.textContent = `Build v${APP_VERSION}`;
   ui.buildBadgeApp.textContent = `Build v${APP_VERSION}`;
   ui.buildVersionLine.textContent = `Build: v${APP_VERSION}`;
+  activateSettingsPane("appearance");
   setScreen("home");
   renderAll();
 }
@@ -154,6 +160,8 @@ function createTimerState(project) {
 function bindEvents() {
   ui.enterAppBtn.addEventListener("click", () => setScreen("app"));
   ui.goHomeBtn.addEventListener("click", () => setScreen("home"));
+  ui.openSettingsBtn.addEventListener("click", () => ui.settingsDialog.showModal());
+  ui.closeSettingsBtn.addEventListener("click", () => ui.settingsDialog.close());
   ui.themeSelect.addEventListener("change", () => setTheme(ui.themeSelect.value));
   ui.zenBtn.addEventListener("click", toggleZenMode);
   ui.exitZenBtn.addEventListener("click", () => setZenMode(false));
@@ -170,6 +178,7 @@ function bindEvents() {
   ui.saveRepoBtn.addEventListener("click", saveRepoConfig);
   ui.downloadLatestBtn.addEventListener("click", downloadLatestExe);
   ui.resetLocalDataBtn.addEventListener("click", resetLocalData);
+  ui.tabButtons.forEach((btn) => btn.addEventListener("click", () => activateSettingsPane(btn.dataset.pane)));
 
   document.addEventListener("keydown", handleShortcuts);
   document.addEventListener("fullscreenchange", () => {
@@ -218,8 +227,15 @@ function bindEvents() {
   });
 }
 
+
+function activateSettingsPane(pane) {
+  ui.tabButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.pane === pane));
+  ui.settingsPanes.forEach((section) => section.classList.toggle("active", section.dataset.pane === pane));
+}
+
 function handleShortcuts(event) {
   if (state.screen !== "app") return;
+  if (ui.settingsDialog.open) return;
   const tag = document.activeElement?.tagName;
   if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
@@ -313,7 +329,7 @@ function saveRepoConfig() {
   state.updateRepo.owner = ui.repoOwnerInput.value.trim();
   state.updateRepo.name = ui.repoNameInput.value.trim();
   saveState();
-  ui.updateStatus.textContent = `Repo saved for build v${APP_VERSION}. Click Download Latest .exe when ready.`;
+  ui.updateStatus.textContent = `Repo saved. Download Latest .exe to fetch newest release build.`;
 }
 
 async function downloadLatestExe() {
