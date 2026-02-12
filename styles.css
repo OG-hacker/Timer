@@ -104,3 +104,8 @@ body.zen-mode .zen-overlay { display:flex; }
   .grid.two-col { grid-template-columns:1fr; }
   .settings-dialog-form { min-width: min(95vw, 860px); }
 }
+
+.utilities-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.8rem; }
+.mini-card { border:1px solid var(--panel-border); border-radius:12px; padding:.8rem; background:rgba(255,255,255,.02); display:grid; gap:.6rem; }
+.time-mini { font-size:1.9rem; font-weight:700; letter-spacing:.03em; text-align:center; }
+@media (max-width: 800px) { .utilities-grid { grid-template-columns:1fr; } }

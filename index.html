@@ -10,7 +10,7 @@
     <div id="home-screen" class="screen active">
       <div class="hero-card">
         <p class="kicker">Something to Focus</p>
-        <p id="build-badge-home" class="build-badge">Build v5.3</p>
+        <p id="build-badge-home" class="build-badge">Build v5.5</p>
         <h1>Focus beautifully. Offline. On your own terms.</h1>
         <p class="subcopy">Multi-project Pomodoro, smart automation, full-screen focus mode, and private local-only storage.</p>
         <div class="home-actions"><button id="enter-app-btn" class="primary">Start Focusing</button></div>
@@ -37,7 +37,7 @@
               <button id="go-home-btn" class="chip">Home</button>
               <button id="open-settings-btn" class="chip">Settings</button>
               <button id="zen-btn" class="chip">Focus View</button>
-              <span id="build-badge-app" class="build-badge small">Build v5.3</span>
+              <span id="build-badge-app" class="build-badge small">Build v5.5</span>
               <span class="badge">100% Offline</span>
             </div>
           </header>
@@ -118,6 +118,7 @@
           <button type="button" class="tab-btn" data-pane="timer">Timer</button>
           <button type="button" class="tab-btn" data-pane="goals">Goals</button>
           <button type="button" class="tab-btn" data-pane="updates">Updates</button>
+          <button type="button" class="tab-btn" data-pane="utilities">Utilities</button>
         </div>
 
         <section class="settings-pane active" data-pane="appearance">
@@ -154,6 +155,33 @@
           <p id="update-status" class="muted">Set repo, then click download to fetch the latest release exe.</p>
           <p class="muted tiny">If UI looks stale, click reset and relaunch newest exe from dist.</p>
           <button id="reset-local-data-btn" type="button">Reset Local Data</button>
+        </section>
+
+        <section class="settings-pane" data-pane="utilities">
+          <div class="utilities-grid">
+            <article class="mini-card">
+              <div class="card-header"><h4>Countdown Timer</h4></div>
+              <label>Minutes<input id="utility-timer-min" type="number" min="1" max="600" value="10" /></label>
+              <p id="utility-timer-display" class="time-mini">10:00</p>
+              <div class="controls compact">
+                <button id="utility-timer-start" type="button" class="primary">Start</button>
+                <button id="utility-timer-pause" type="button">Pause</button>
+                <button id="utility-timer-reset" type="button">Reset</button>
+                <button id="utility-open-zen-btn" type="button">Focus View</button>
+              </div>
+            </article>
+
+            <article class="mini-card">
+              <div class="card-header"><h4>Stopwatch</h4></div>
+              <p id="stopwatch-display" class="time-mini">00:00:00</p>
+              <div class="controls compact">
+                <button id="stopwatch-start" type="button" class="primary">Start</button>
+                <button id="stopwatch-pause" type="button">Pause</button>
+                <button id="stopwatch-reset" type="button">Reset</button>
+                <button id="stopwatch-open-zen-btn" type="button">Focus View</button>
+              </div>
+            </article>
+          </div>
         </section>
       </form>
     </dialog>

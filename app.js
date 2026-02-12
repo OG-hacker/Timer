@@ -1,5 +1,5 @@
-const APP_VERSION = "5.3.0";
-const STORAGE_KEY = "something-to-focus-v8";
+const APP_VERSION = "5.5.0";
+const STORAGE_KEY = "something-to-focus-v10";
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const THEMES = [
   { id: "default", label: "Midnight Neon" },
@@ -25,6 +25,14 @@ const defaultProject = {
 const state = loadState();
 let timerInterval = null;
 let timerStart = Date.now();
+let utilityTimerInterval = null;
+let utilityTimerStart = Date.now();
+let utilityTimerRemainingMs = 10 * 60_000;
+let utilityTimerDurationMs = 10 * 60_000;
+let stopwatchInterval = null;
+let stopwatchElapsedMs = 0;
+let stopwatchStart = 0;
+let zenSource = "pomodoro";
 
 const ui = {
   homeScreen: document.getElementById("home-screen"),
@@ -88,6 +96,17 @@ const ui = {
   resetLocalDataBtn: document.getElementById("reset-local-data-btn"),
   tabButtons: Array.from(document.querySelectorAll(".tab-btn")),
   settingsPanes: Array.from(document.querySelectorAll(".settings-pane")),
+  utilityTimerMin: document.getElementById("utility-timer-min"),
+  utilityTimerDisplay: document.getElementById("utility-timer-display"),
+  utilityTimerStart: document.getElementById("utility-timer-start"),
+  utilityTimerPause: document.getElementById("utility-timer-pause"),
+  utilityTimerReset: document.getElementById("utility-timer-reset"),
+  utilityOpenZenBtn: document.getElementById("utility-open-zen-btn"),
+  stopwatchDisplay: document.getElementById("stopwatch-display"),
+  stopwatchStart: document.getElementById("stopwatch-start"),
+  stopwatchPause: document.getElementById("stopwatch-pause"),
+  stopwatchReset: document.getElementById("stopwatch-reset"),
+  stopwatchOpenZenBtn: document.getElementById("stopwatch-open-zen-btn"),
 };
 
 const modeMeta = { focus: { label: "Focus" }, short: { label: "Short Break" }, long: { label: "Long Break" } };
@@ -107,6 +126,7 @@ function init() {
   activateSettingsPane("appearance");
   setScreen("home");
   renderAll();
+  renderUtilities();
 }
 
 function loadState() {
@@ -163,22 +183,43 @@ function bindEvents() {
   ui.openSettingsBtn.addEventListener("click", () => ui.settingsDialog.showModal());
   ui.closeSettingsBtn.addEventListener("click", () => ui.settingsDialog.close());
   ui.themeSelect.addEventListener("change", () => setTheme(ui.themeSelect.value));
-  ui.zenBtn.addEventListener("click", toggleZenMode);
+  ui.zenBtn.addEventListener("click", () => {
+    if (utilityTimerInterval) zenSource = "utilityTimer";
+    else if (stopwatchInterval) zenSource = "stopwatch";
+    else zenSource = "pomodoro";
+    toggleZenMode();
+  });
   ui.exitZenBtn.addEventListener("click", () => setZenMode(false));
   ui.startBtn.addEventListener("click", startTimer);
   ui.pauseBtn.addEventListener("click", pauseTimer);
   ui.resetBtn.addEventListener("click", resetTimer);
   ui.skipBtn.addEventListener("click", () => transitionMode(true));
-  ui.zenStartBtn.addEventListener("click", startTimer);
-  ui.zenPauseBtn.addEventListener("click", pauseTimer);
-  ui.zenResetBtn.addEventListener("click", resetTimer);
-  ui.zenSkipBtn.addEventListener("click", () => transitionMode(true));
+  ui.zenStartBtn.addEventListener("click", handleZenStart);
+  ui.zenPauseBtn.addEventListener("click", handleZenPause);
+  ui.zenResetBtn.addEventListener("click", handleZenReset);
+  ui.zenSkipBtn.addEventListener("click", handleZenSkip);
   ui.saveSettingsBtn.addEventListener("click", applySettings);
   ui.saveGoalBtn.addEventListener("click", applyGoal);
   ui.saveRepoBtn.addEventListener("click", saveRepoConfig);
   ui.downloadLatestBtn.addEventListener("click", downloadLatestExe);
   ui.resetLocalDataBtn.addEventListener("click", resetLocalData);
   ui.tabButtons.forEach((btn) => btn.addEventListener("click", () => activateSettingsPane(btn.dataset.pane)));
+  ui.utilityTimerStart.addEventListener("click", startUtilityTimer);
+  ui.utilityTimerPause.addEventListener("click", pauseUtilityTimer);
+  ui.utilityTimerReset.addEventListener("click", resetUtilityTimer);
+  ui.stopwatchStart.addEventListener("click", startStopwatch);
+  ui.stopwatchPause.addEventListener("click", pauseStopwatch);
+  ui.stopwatchReset.addEventListener("click", resetStopwatch);
+  ui.utilityOpenZenBtn.addEventListener("click", () => {
+    zenSource = "utilityTimer";
+    if (ui.settingsDialog.open) ui.settingsDialog.close();
+    setZenMode(true);
+  });
+  ui.stopwatchOpenZenBtn.addEventListener("click", () => {
+    zenSource = "stopwatch";
+    if (ui.settingsDialog.open) ui.settingsDialog.close();
+    setZenMode(true);
+  });
 
   document.addEventListener("keydown", handleShortcuts);
   document.addEventListener("fullscreenchange", () => {
@@ -227,6 +268,30 @@ function bindEvents() {
   });
 }
 
+
+
+function handleZenStart() {
+  if (zenSource === "utilityTimer") return startUtilityTimer();
+  if (zenSource === "stopwatch") return startStopwatch();
+  return startTimer();
+}
+
+function handleZenPause() {
+  if (zenSource === "utilityTimer") return pauseUtilityTimer();
+  if (zenSource === "stopwatch") return pauseStopwatch();
+  return pauseTimer();
+}
+
+function handleZenReset() {
+  if (zenSource === "utilityTimer") return resetUtilityTimer();
+  if (zenSource === "stopwatch") return resetStopwatch();
+  return resetTimer();
+}
+
+function handleZenSkip() {
+  if (zenSource !== "pomodoro") return;
+  transitionMode(true);
+}
 
 function activateSettingsPane(pane) {
   ui.tabButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.pane === pane));
@@ -443,6 +508,7 @@ function notify(title, body) {
 function setZenMode(enabled, syncFullscreen = true) {
   state.zenMode = enabled;
   document.body.classList.toggle("zen-mode", enabled);
+  if (!enabled) zenSource = "pomodoro";
   ui.zenBtn.textContent = enabled ? "Exit Focus View" : "Focus View";
 
   if (syncFullscreen) {
@@ -465,6 +531,7 @@ function renderAll() {
   renderTodos();
   renderStats();
   renderGoal();
+  renderUtilities();
 }
 
 function renderProjects() {
@@ -525,14 +592,8 @@ function renderTimer() {
   ui.sessionLabel.textContent = label;
   ui.timeDisplay.textContent = time;
   ui.cycleDisplay.textContent = cycle;
-  ui.zenSessionLabel.textContent = label;
-  ui.zenTimeDisplay.textContent = time;
-  ui.zenCycleDisplay.textContent = cycle;
-
   ui.startBtn.disabled = state.timer.running;
   ui.pauseBtn.disabled = !state.timer.running;
-  ui.zenStartBtn.disabled = state.timer.running;
-  ui.zenPauseBtn.disabled = !state.timer.running;
 
   ui.timerModes.querySelectorAll(".mode-btn").forEach((btn) => btn.classList.toggle("active", btn.dataset.mode === state.timer.mode));
 
@@ -547,6 +608,8 @@ function renderTimer() {
   ui.zenRingProgress.style.stroke = p.color;
   ui.zenRingProgress.style.strokeDasharray = `${c}`;
   ui.zenRingProgress.style.strokeDashoffset = offset;
+
+  renderZenOverlay();
 }
 
 function renderTodos() {
@@ -652,6 +715,137 @@ function renderStats() {
   });
 
   ui.weeklyTotal.textContent = `${total}m this week`;
+}
+
+
+function startUtilityTimer() {
+  const mins = clampInt(ui.utilityTimerMin.value, 1, 600, 10);
+  if (!utilityTimerInterval && utilityTimerRemainingMs === utilityTimerDurationMs) {
+    utilityTimerDurationMs = mins * 60_000;
+    utilityTimerRemainingMs = utilityTimerDurationMs;
+  }
+  if (utilityTimerInterval) return;
+  utilityTimerStart = Date.now();
+  utilityTimerInterval = setInterval(() => {
+    const now = Date.now();
+    const elapsed = now - utilityTimerStart;
+    utilityTimerStart = now;
+    utilityTimerRemainingMs = Math.max(0, utilityTimerRemainingMs - elapsed);
+    if (utilityTimerRemainingMs <= 0) {
+      clearInterval(utilityTimerInterval);
+      utilityTimerInterval = null;
+      notify("Countdown finished", "Your utility timer is complete.");
+    }
+    renderUtilities();
+  }, 250);
+  renderUtilities();
+}
+
+function pauseUtilityTimer() {
+  if (!utilityTimerInterval) return;
+  clearInterval(utilityTimerInterval);
+  utilityTimerInterval = null;
+  renderUtilities();
+}
+
+function resetUtilityTimer() {
+  pauseUtilityTimer();
+  const mins = clampInt(ui.utilityTimerMin.value, 1, 600, 10);
+  utilityTimerDurationMs = mins * 60_000;
+  utilityTimerRemainingMs = utilityTimerDurationMs;
+  renderUtilities();
+}
+
+function startStopwatch() {
+  if (stopwatchInterval) return;
+  stopwatchStart = Date.now();
+  stopwatchInterval = setInterval(() => {
+    const now = Date.now();
+    stopwatchElapsedMs += now - stopwatchStart;
+    stopwatchStart = now;
+    renderUtilities();
+  }, 100);
+  renderUtilities();
+}
+
+function pauseStopwatch() {
+  if (!stopwatchInterval) return;
+  clearInterval(stopwatchInterval);
+  stopwatchInterval = null;
+  renderUtilities();
+}
+
+function resetStopwatch() {
+  pauseStopwatch();
+  stopwatchElapsedMs = 0;
+  renderUtilities();
+}
+
+function formatStopwatch(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const h = String(Math.floor(totalSec / 3600)).padStart(2, "0");
+  const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2, "0");
+  const s = String(totalSec % 60).padStart(2, "0");
+  return `${h}:${m}:${s}`;
+}
+
+function renderUtilities() {
+  if (!ui.utilityTimerDisplay) return;
+  ui.utilityTimerDisplay.textContent = formatTime(utilityTimerRemainingMs);
+  ui.utilityTimerStart.disabled = Boolean(utilityTimerInterval);
+  ui.utilityTimerPause.disabled = !utilityTimerInterval;
+  ui.stopwatchDisplay.textContent = formatStopwatch(stopwatchElapsedMs);
+  ui.stopwatchStart.disabled = Boolean(stopwatchInterval);
+  ui.stopwatchPause.disabled = !stopwatchInterval;
+
+  renderZenOverlay();
+}
+
+
+function renderZenOverlay() {
+  const p = getProject();
+  const r = Number(ui.ringProgress.getAttribute("r"));
+  const c = 2 * Math.PI * r;
+
+  if (zenSource === "utilityTimer") {
+    ui.zenSessionLabel.textContent = "Countdown Timer";
+    ui.zenTimeDisplay.textContent = formatTime(utilityTimerRemainingMs);
+    ui.zenCycleDisplay.textContent = "Utilities";
+    const progress = 1 - utilityTimerRemainingMs / Math.max(1, utilityTimerDurationMs);
+    ui.zenRingProgress.style.stroke = "var(--accent)";
+    ui.zenRingProgress.style.strokeDasharray = `${c}`;
+    ui.zenRingProgress.style.strokeDashoffset = `${c * (1 - progress)}`;
+    ui.zenStartBtn.disabled = Boolean(utilityTimerInterval);
+    ui.zenPauseBtn.disabled = !utilityTimerInterval;
+    ui.zenSkipBtn.style.display = "none";
+    return;
+  }
+
+  if (zenSource === "stopwatch") {
+    ui.zenSessionLabel.textContent = "Stopwatch";
+    ui.zenTimeDisplay.textContent = formatStopwatch(stopwatchElapsedMs);
+    ui.zenCycleDisplay.textContent = "Utilities";
+    const pseudoDuration = 60 * 60 * 1000;
+    const progress = (stopwatchElapsedMs % pseudoDuration) / pseudoDuration;
+    ui.zenRingProgress.style.stroke = "var(--accent)";
+    ui.zenRingProgress.style.strokeDasharray = `${c}`;
+    ui.zenRingProgress.style.strokeDashoffset = `${c * (1 - progress)}`;
+    ui.zenStartBtn.disabled = Boolean(stopwatchInterval);
+    ui.zenPauseBtn.disabled = !stopwatchInterval;
+    ui.zenSkipBtn.style.display = "none";
+    return;
+  }
+
+  ui.zenSessionLabel.textContent = modeMeta[state.timer.mode].label;
+  ui.zenTimeDisplay.textContent = formatTime(state.timer.remainingMs);
+  ui.zenCycleDisplay.textContent = `Cycle ${state.timer.currentCycle} / ${p.settings.cycles}`;
+  const progress = 1 - state.timer.remainingMs / state.timer.durationMs;
+  ui.zenRingProgress.style.stroke = p.color;
+  ui.zenRingProgress.style.strokeDasharray = `${c}`;
+  ui.zenRingProgress.style.strokeDashoffset = `${c * (1 - progress)}`;
+  ui.zenStartBtn.disabled = state.timer.running;
+  ui.zenPauseBtn.disabled = !state.timer.running;
+  ui.zenSkipBtn.style.display = "";
 }
 
 function saveState() {
