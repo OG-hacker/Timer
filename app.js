@@ -1,5 +1,5 @@
-const APP_VERSION = "5.9.0";
-const STORAGE_KEY = "something-to-focus-v13";
+const APP_VERSION = "6.0.0";
+const STORAGE_KEY = "something-to-focus-v14";
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const THEMES = [
   { id: "default", label: "Midnight Neon" },
@@ -11,7 +11,25 @@ const THEMES = [
   { id: "solar", label: "Solar Dusk" },
   { id: "aurora", label: "Aurora" },
   { id: "rose", label: "Rose Gold" },
+  { id: "ember", label: "Ember Night" },
+  { id: "ice", label: "Ice Blue" },
+  { id: "coffee", label: "Coffee House" },
+  { id: "mint", label: "Mint Glow" },
+  { id: "sakura", label: "Sakura" },
+  { id: "violet", label: "Violet Storm" },
+  { id: "slate", label: "Slate Minimal" },
+  { id: "custom", label: "Custom" },
 ];
+
+const DEFAULT_CUSTOM_THEME = {
+  bg: "#0b1020",
+  bg2: "#171f40",
+  panel: "#1a2242",
+  panelBorder: "#8fa0ff33",
+  text: "#f6f8ff",
+  muted: "#a8b1df",
+  accent: "#7c5cff",
+};
 
 const defaultProject = {
   id: crypto.randomUUID(),
@@ -39,6 +57,15 @@ const ui = {
   appScreen: document.getElementById("app-screen"),
   enterAppBtn: document.getElementById("enter-app-btn"),
   themeSelect: document.getElementById("theme-select"),
+  customBgInput: document.getElementById("custom-bg"),
+  customBg2Input: document.getElementById("custom-bg2"),
+  customPanelInput: document.getElementById("custom-panel"),
+  customBorderInput: document.getElementById("custom-border"),
+  customTextInput: document.getElementById("custom-text"),
+  customMutedInput: document.getElementById("custom-muted"),
+  customAccentInput: document.getElementById("custom-accent"),
+  applyCustomThemeBtn: document.getElementById("apply-custom-theme-btn"),
+  resetCustomThemeBtn: document.getElementById("reset-custom-theme-btn"),
   goHomeBtn: document.getElementById("go-home-btn"),
   openSettingsBtn: document.getElementById("open-settings-btn"),
   closeSettingsBtn: document.getElementById("close-settings-btn"),
@@ -145,6 +172,7 @@ function loadState() {
       activeProjectId,
       timer: parsed.timer || createTimerState(parsed.projects[0]),
       theme: parsed.theme || "default",
+      customTheme: { ...DEFAULT_CUSTOM_THEME, ...(parsed.customTheme || {}) },
       dailyGoalMin: Number(parsed.dailyGoalMin) > 0 ? parsed.dailyGoalMin : 180,
       updateRepo: parsed.updateRepo || { owner: "", name: "" },
       zenMode: false,
@@ -162,6 +190,7 @@ function createInitialState() {
     activeProjectId: defaultProject.id,
     timer: createTimerState(defaultProject),
     theme: "default",
+    customTheme: { ...DEFAULT_CUSTOM_THEME },
     dailyGoalMin: 180,
     updateRepo: { owner: "", name: "" },
     zenMode: false,
@@ -187,6 +216,8 @@ function bindEvents() {
   ui.openSettingsBtn.addEventListener("click", () => ui.settingsDialog.showModal());
   ui.closeSettingsBtn.addEventListener("click", () => ui.settingsDialog.close());
   ui.themeSelect.addEventListener("change", () => setTheme(ui.themeSelect.value));
+  ui.applyCustomThemeBtn.addEventListener("click", applyCustomTheme);
+  ui.resetCustomThemeBtn.addEventListener("click", resetCustomTheme);
   ui.zenBtn.addEventListener("click", () => {
     if (utilityTimerInterval) zenSource = "utilityTimer";
     else if (stopwatchInterval) zenSource = "stopwatch";
@@ -335,13 +366,69 @@ function populateThemes() {
     option.textContent = theme.label;
     ui.themeSelect.appendChild(option);
   });
+  syncCustomThemeInputs();
 }
 
 function setTheme(themeId) {
   state.theme = THEMES.some((t) => t.id === themeId) ? themeId : "default";
   document.documentElement.dataset.theme = state.theme === "default" ? "" : state.theme;
+  applyCustomThemeCss();
   ui.themeSelect.value = state.theme;
   saveState();
+}
+
+function syncCustomThemeInputs() {
+  const c = state.customTheme || DEFAULT_CUSTOM_THEME;
+  ui.customBgInput.value = c.bg;
+  ui.customBg2Input.value = c.bg2;
+  ui.customPanelInput.value = c.panel;
+  ui.customBorderInput.value = hexFromBorder(c.panelBorder);
+  ui.customTextInput.value = c.text;
+  ui.customMutedInput.value = c.muted;
+  ui.customAccentInput.value = c.accent;
+}
+
+function applyCustomTheme() {
+  state.customTheme = {
+    bg: ui.customBgInput.value,
+    bg2: ui.customBg2Input.value,
+    panel: ui.customPanelInput.value,
+    panelBorder: `${ui.customBorderInput.value}44`,
+    text: ui.customTextInput.value,
+    muted: ui.customMutedInput.value,
+    accent: ui.customAccentInput.value,
+  };
+  setTheme("custom");
+  ui.updateStatus.textContent = "Custom theme applied.";
+}
+
+function resetCustomTheme() {
+  state.customTheme = { ...DEFAULT_CUSTOM_THEME };
+  syncCustomThemeInputs();
+  setTheme("custom");
+  ui.updateStatus.textContent = "Custom theme reset to defaults.";
+}
+
+function applyCustomThemeCss() {
+  const root = document.documentElement;
+  if (state.theme !== "custom") {
+    ["--bg", "--bg-2", "--panel", "--panel-border", "--text", "--muted", "--accent", "--primary-text"].forEach((k) => root.style.removeProperty(k));
+    return;
+  }
+  const c = state.customTheme || DEFAULT_CUSTOM_THEME;
+  root.style.setProperty("--bg", c.bg);
+  root.style.setProperty("--bg-2", c.bg2);
+  root.style.setProperty("--panel", `${c.panel}cc`);
+  root.style.setProperty("--panel-border", c.panelBorder);
+  root.style.setProperty("--text", c.text);
+  root.style.setProperty("--muted", c.muted);
+  root.style.setProperty("--accent", c.accent);
+  root.style.setProperty("--primary-text", "#ffffff");
+}
+
+function hexFromBorder(value) {
+  if (!value || !value.startsWith("#")) return "#8fa0ff";
+  return value.slice(0, 7);
 }
 
 function buildModes() {
@@ -394,13 +481,14 @@ function syncSettingsInputs() {
   ui.dailyGoalInput.value = state.dailyGoalMin;
   ui.repoOwnerInput.value = state.updateRepo.owner;
   ui.repoNameInput.value = state.updateRepo.name;
+  syncCustomThemeInputs();
 }
 
 function saveRepoConfig() {
   state.updateRepo.owner = ui.repoOwnerInput.value.trim();
   state.updateRepo.name = ui.repoNameInput.value.trim();
   saveState();
-  ui.updateStatus.textContent = `Repo saved. Click Download Latest Windows Build to fetch the newest release.`;
+  ui.updateStatus.textContent = `Repo saved. Click Download Latest Source to fetch the newest code.`;
 }
 
 async function downloadLatestExe() {
@@ -413,54 +501,27 @@ async function downloadLatestExe() {
 
   state.updateRepo = { owner, name };
   saveState();
-  ui.updateStatus.textContent = "Checking latest release...";
+  ui.updateStatus.textContent = "Checking repository latest commit...";
 
   try {
-    const response = await fetch(`https://api.github.com/repos/${owner}/${name}/releases/latest`);
-    if (!response.ok) throw new Error(`GitHub API ${response.status}`);
-    const release = await response.json();
-    const assets = release.assets || [];
-
-    const scoreAsset = (asset) => {
-      const n = (asset.name || "").toLowerCase();
-      let score = -1;
-      if (!/win|windows|x64|portable|setup|installer|msi|exe|zip/.test(n)) return score;
-      if (n.endsWith('.exe')) score = 100;
-      else if (n.endsWith('.msi')) score = 90;
-      else if (n.endsWith('.msix') || n.endsWith('.appx')) score = 80;
-      else if (n.endsWith('.zip')) score = 60;
-      else if (n.endsWith('.7z')) score = 50;
-      if (/portable/.test(n)) score += 15;
-      if (/setup|installer/.test(n)) score += 10;
-      if (/arm/.test(n)) score -= 20;
-      return score;
-    };
-
-    const candidates = assets
-      .map((asset) => ({ asset, score: scoreAsset(asset) }))
-      .filter((x) => x.score >= 0)
-      .sort((a, b) => b.score - a.score);
-
-    const selected = candidates[0]?.asset;
-
-    if (!selected?.browser_download_url) {
-      window.open(`https://github.com/${owner}/${name}/releases/latest`, '_blank');
-      ui.updateStatus.textContent = "No Windows build asset found in latest release. Opened releases page so you can download manually.";
-      return;
-    }
-
-    ui.updateStatus.textContent = `Downloading and opening: ${selected.name}`;
+    const repoResponse = await fetch(`https://api.github.com/repos/${owner}/${name}`);
+    if (!repoResponse.ok) throw new Error(`GitHub API ${repoResponse.status}`);
+    const repo = await repoResponse.json();
+    const branch = repo.default_branch || "main";
+    const zipUrl = `https://codeload.github.com/${owner}/${name}/zip/refs/heads/${branch}`;
+    const fileName = `${name}-${branch}-latest.zip`;
 
     if (window.desktopAPI?.downloadAndOpenAsset) {
+      ui.updateStatus.textContent = `Downloading latest source (${branch})...`;
       const result = await window.desktopAPI.downloadAndOpenAsset({
-        url: selected.browser_download_url,
-        fileName: selected.name,
+        url: zipUrl,
+        fileName,
       });
       if (!result?.ok) throw new Error(result?.error || "Could not open downloaded file");
-      ui.updateStatus.textContent = `Downloaded to ${result.filePath} and launched/opened.`;
+      ui.updateStatus.textContent = `Downloaded latest source to ${result.filePath}`;
     } else {
-      window.open(selected.browser_download_url, "_blank");
-      ui.updateStatus.textContent = `Opened download link for ${selected.name}`;
+      window.open(zipUrl, "_blank");
+      ui.updateStatus.textContent = "Opened latest source code download in a new tab.";
     }
   } catch (error) {
     ui.updateStatus.textContent = `Update download failed: ${error.message}`;
@@ -874,6 +935,7 @@ function renderZenOverlay() {
 
   ui.exitPipBtn.style.display = state.pipMode ? "" : "none";
   ui.exitZenBtn.style.display = state.pipMode ? "none" : "";
+  ui.zenResetBtn.style.display = state.pipMode ? "none" : "";
 
   if (zenSource === "utilityTimer") {
     ui.zenSessionLabel.textContent = "Countdown Timer";
@@ -913,7 +975,7 @@ function renderZenOverlay() {
   ui.zenRingProgress.style.strokeDashoffset = `${c * (1 - progress)}`;
   ui.zenStartBtn.disabled = state.timer.running;
   ui.zenPauseBtn.disabled = !state.timer.running;
-  ui.zenSkipBtn.style.display = "";
+  ui.zenSkipBtn.style.display = state.pipMode ? "none" : "";
 }
 
 function saveState() {

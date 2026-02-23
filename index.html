@@ -10,7 +10,7 @@
     <div id="home-screen" class="screen active">
       <div class="hero-card">
         <p class="kicker">Something to Focus</p>
-        <p id="build-badge-home" class="build-badge">Build v5.8.0</p>
+        <p id="build-badge-home" class="build-badge">Build v6.0.0</p>
         <h1>Focus beautifully. Offline. On your own terms.</h1>
         <p class="subcopy">Multi-project Pomodoro, smart automation, full-screen focus mode, and private local-only storage.</p>
         <div class="home-actions"><button id="enter-app-btn" class="primary">Start Focusing</button></div>
@@ -38,7 +38,7 @@
               <button id="open-settings-btn" class="chip">Settings</button>
               <button id="zen-btn" class="chip">Focus View</button>
               <button id="pip-btn" class="chip">PiP Focus</button>
-              <span id="build-badge-app" class="build-badge small">Build v5.8.0</span>
+              <span id="build-badge-app" class="build-badge small">Build v6.0.0</span>
               <span class="badge">100% Offline</span>
             </div>
           </header>
@@ -126,7 +126,20 @@
         <section class="settings-pane active" data-pane="appearance">
           <label class="theme-picker-wrap">Theme<select id="theme-select"></select></label>
           <p id="build-version-line" class="muted">Build: v0.0.0</p>
-          <p class="muted tiny">PiP stays available from the main header button and is now resizable after opening.</p>
+          <div class="custom-theme-grid">
+            <label>Background<input id="custom-bg" type="color" value="#0b1020" /></label>
+            <label>Gradient Glow<input id="custom-bg2" type="color" value="#171f40" /></label>
+            <label>Panel<input id="custom-panel" type="color" value="#1a2242" /></label>
+            <label>Panel Border<input id="custom-border" type="color" value="#8fa0ff" /></label>
+            <label>Text<input id="custom-text" type="color" value="#f6f8ff" /></label>
+            <label>Muted Text<input id="custom-muted" type="color" value="#a8b1df" /></label>
+            <label>Accent<input id="custom-accent" type="color" value="#7c5cff" /></label>
+          </div>
+          <div class="controls compact">
+            <button id="apply-custom-theme-btn" type="button" class="chip">Apply Custom Theme</button>
+            <button id="reset-custom-theme-btn" type="button">Reset Custom Theme</button>
+          </div>
+          <p class="muted tiny">PiP is available from the main header button. In PiP the controls are intentionally minimal for clarity.</p>
         </section>
 
         <section class="settings-pane" data-pane="timer">
@@ -154,8 +167,8 @@
           <div class="card-header"><h4>In-App Updates</h4><button id="save-repo-btn" class="chip" type="button">Save</button></div>
           <label>GitHub owner<input id="repo-owner" placeholder="your-github-username" autocomplete="off" /></label>
           <label>Repo name<input id="repo-name" placeholder="Something-to-Focus" autocomplete="off" /></label>
-          <div class="controls compact"><button id="download-latest-btn" class="primary" type="button">Download Latest Windows Build</button></div>
-          <p id="update-status" class="muted">Set repo, then click download to fetch the latest Windows build (.exe/.msi/.zip).</p>
+          <div class="controls compact"><button id="download-latest-btn" class="primary" type="button">Download Latest Source Code</button></div>
+          <p id="update-status" class="muted">Set repo, then click download to fetch the newest code zip from the default branch.</p>
           <p class="muted tiny">If UI looks stale, click reset and relaunch newest exe from dist.</p>
           <button id="reset-local-data-btn" type="button">Reset Local Data</button>
         </section>
