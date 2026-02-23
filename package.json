@@ -1,6 +1,6 @@
 {
   "name": "something-to-focus",
-  "version": "5.8.0",
+  "version": "5.9.0",
   "description": "Aesthetic offline Pomodoro productivity desktop app",
   "main": "main.js",
   "scripts": {

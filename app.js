@@ -1,4 +1,4 @@
-const APP_VERSION = "5.8.0";
+const APP_VERSION = "5.9.0";
 const STORAGE_KEY = "something-to-focus-v13";
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const THEMES = [
@@ -45,8 +45,6 @@ const ui = {
   settingsDialog: document.getElementById("settings-dialog"),
   zenBtn: document.getElementById("zen-btn"),
   pipBtn: document.getElementById("pip-btn"),
-  pipBtnSecondary: document.getElementById("pip-btn-secondary"),
-  pipBtnSettings: document.getElementById("pip-btn-settings"),
   exitZenBtn: document.getElementById("exit-zen-btn"),
   exitPipBtn: document.getElementById("exit-pip-btn"),
   projectList: document.getElementById("project-list"),
@@ -197,8 +195,6 @@ function bindEvents() {
   });
   ui.exitZenBtn.addEventListener("click", () => setZenMode(false));
   ui.pipBtn.addEventListener("click", () => setPipMode(true));
-  ui.pipBtnSecondary.addEventListener("click", () => setPipMode(true));
-  ui.pipBtnSettings.addEventListener("click", () => setPipMode(true));
   ui.exitPipBtn.addEventListener("click", () => setPipMode(false));
   ui.startBtn.addEventListener("click", startTimer);
   ui.pauseBtn.addEventListener("click", pauseTimer);
@@ -404,7 +400,7 @@ function saveRepoConfig() {
   state.updateRepo.owner = ui.repoOwnerInput.value.trim();
   state.updateRepo.name = ui.repoNameInput.value.trim();
   saveState();
-  ui.updateStatus.textContent = `Repo saved. Download Latest .exe to fetch newest release build.`;
+  ui.updateStatus.textContent = `Repo saved. Click Download Latest Windows Build to fetch the newest release.`;
 }
 
 async function downloadLatestExe() {
@@ -424,25 +420,47 @@ async function downloadLatestExe() {
     if (!response.ok) throw new Error(`GitHub API ${response.status}`);
     const release = await response.json();
     const assets = release.assets || [];
-    const exeAsset = assets.find((asset) => /portable.*\.exe$/i.test(asset.name)) || assets.find((asset) => /\.exe$/i.test(asset.name));
 
-    if (!exeAsset?.browser_download_url) {
-      ui.updateStatus.textContent = "No runnable Windows .exe found in latest release. Upload a portable .exe asset to Releases first.";
+    const scoreAsset = (asset) => {
+      const n = (asset.name || "").toLowerCase();
+      let score = -1;
+      if (!/win|windows|x64|portable|setup|installer|msi|exe|zip/.test(n)) return score;
+      if (n.endsWith('.exe')) score = 100;
+      else if (n.endsWith('.msi')) score = 90;
+      else if (n.endsWith('.msix') || n.endsWith('.appx')) score = 80;
+      else if (n.endsWith('.zip')) score = 60;
+      else if (n.endsWith('.7z')) score = 50;
+      if (/portable/.test(n)) score += 15;
+      if (/setup|installer/.test(n)) score += 10;
+      if (/arm/.test(n)) score -= 20;
+      return score;
+    };
+
+    const candidates = assets
+      .map((asset) => ({ asset, score: scoreAsset(asset) }))
+      .filter((x) => x.score >= 0)
+      .sort((a, b) => b.score - a.score);
+
+    const selected = candidates[0]?.asset;
+
+    if (!selected?.browser_download_url) {
+      window.open(`https://github.com/${owner}/${name}/releases/latest`, '_blank');
+      ui.updateStatus.textContent = "No Windows build asset found in latest release. Opened releases page so you can download manually.";
       return;
     }
 
-    ui.updateStatus.textContent = `Downloading and opening: ${exeAsset.name}`;
+    ui.updateStatus.textContent = `Downloading and opening: ${selected.name}`;
 
     if (window.desktopAPI?.downloadAndOpenAsset) {
       const result = await window.desktopAPI.downloadAndOpenAsset({
-        url: exeAsset.browser_download_url,
-        fileName: exeAsset.name,
+        url: selected.browser_download_url,
+        fileName: selected.name,
       });
       if (!result?.ok) throw new Error(result?.error || "Could not open downloaded file");
-      ui.updateStatus.textContent = `Downloaded to ${result.filePath} and launched.`;
+      ui.updateStatus.textContent = `Downloaded to ${result.filePath} and launched/opened.`;
     } else {
-      window.open(exeAsset.browser_download_url, "_blank");
-      ui.updateStatus.textContent = `Opened download link for ${exeAsset.name}`;
+      window.open(selected.browser_download_url, "_blank");
+      ui.updateStatus.textContent = `Opened download link for ${selected.name}`;
     }
   } catch (error) {
     ui.updateStatus.textContent = `Update download failed: ${error.message}`;
@@ -855,6 +873,7 @@ function renderZenOverlay() {
   const c = 2 * Math.PI * r;
 
   ui.exitPipBtn.style.display = state.pipMode ? "" : "none";
+  ui.exitZenBtn.style.display = state.pipMode ? "none" : "";
 
   if (zenSource === "utilityTimer") {
     ui.zenSessionLabel.textContent = "Countdown Timer";

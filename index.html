@@ -63,7 +63,6 @@
             <button id="pause-btn">Pause</button>
             <button id="reset-btn">Reset</button>
             <button id="skip-btn">Skip</button>
-            <button class="pip-trigger chip" id="pip-btn-secondary">PiP Focus</button>
           </section>
 
           <section class="grid two-col">
@@ -127,9 +126,7 @@
         <section class="settings-pane active" data-pane="appearance">
           <label class="theme-picker-wrap">Theme<select id="theme-select"></select></label>
           <p id="build-version-line" class="muted">Build: v0.0.0</p>
-          <div class="controls compact">
-            <button type="button" class="pip-trigger" id="pip-btn-settings">Open PiP Focus</button>
-          </div>
+          <p class="muted tiny">PiP stays available from the main header button and is now resizable after opening.</p>
         </section>
 
         <section class="settings-pane" data-pane="timer">
@@ -157,8 +154,8 @@
           <div class="card-header"><h4>In-App Updates</h4><button id="save-repo-btn" class="chip" type="button">Save</button></div>
           <label>GitHub owner<input id="repo-owner" placeholder="your-github-username" autocomplete="off" /></label>
           <label>Repo name<input id="repo-name" placeholder="Something-to-Focus" autocomplete="off" /></label>
-          <div class="controls compact"><button id="download-latest-btn" class="primary" type="button">Download Latest .exe</button></div>
-          <p id="update-status" class="muted">Set repo, then click download to fetch the latest release exe.</p>
+          <div class="controls compact"><button id="download-latest-btn" class="primary" type="button">Download Latest Windows Build</button></div>
+          <p id="update-status" class="muted">Set repo, then click download to fetch the latest Windows build (.exe/.msi/.zip).</p>
           <p class="muted tiny">If UI looks stale, click reset and relaunch newest exe from dist.</p>
           <button id="reset-local-data-btn" type="button">Reset Local Data</button>
         </section>

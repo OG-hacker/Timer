@@ -40,7 +40,8 @@ ipcMain.handle('set-pip-mode', (_event, enabled) => {
     if (mainWindow.isFullScreen()) mainWindow.setFullScreen(false);
     mainWindow.setAlwaysOnTop(true, 'screen-saver');
     mainWindow.setBounds({ x, y, width, height });
-    mainWindow.setResizable(false);
+    mainWindow.setResizable(true);
+    mainWindow.setMinimumSize(320, 360);
     return true;
   }
 
