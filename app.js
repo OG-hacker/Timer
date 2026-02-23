@@ -1,5 +1,5 @@
-const APP_VERSION = "5.6.0";
-const STORAGE_KEY = "something-to-focus-v11";
+const APP_VERSION = "5.5.0";
+const STORAGE_KEY = "something-to-focus-v10";
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const THEMES = [
   { id: "default", label: "Midnight Neon" },
@@ -44,9 +44,7 @@ const ui = {
   closeSettingsBtn: document.getElementById("close-settings-btn"),
   settingsDialog: document.getElementById("settings-dialog"),
   zenBtn: document.getElementById("zen-btn"),
-  pipBtn: document.getElementById("pip-btn"),
   exitZenBtn: document.getElementById("exit-zen-btn"),
-  exitPipBtn: document.getElementById("exit-pip-btn"),
   projectList: document.getElementById("project-list"),
   activeProjectName: document.getElementById("active-project-name"),
   timeDisplay: document.getElementById("time-display"),
@@ -148,7 +146,6 @@ function loadState() {
       dailyGoalMin: Number(parsed.dailyGoalMin) > 0 ? parsed.dailyGoalMin : 180,
       updateRepo: parsed.updateRepo || { owner: "", name: "" },
       zenMode: false,
-      pipMode: false,
       screen: "home",
     };
   } catch {
@@ -165,7 +162,6 @@ function createInitialState() {
     dailyGoalMin: 180,
     updateRepo: { owner: "", name: "" },
     zenMode: false,
-    pipMode: false,
     screen: "home",
   };
 }
@@ -194,8 +190,6 @@ function bindEvents() {
     toggleZenMode();
   });
   ui.exitZenBtn.addEventListener("click", () => setZenMode(false));
-  ui.pipBtn.addEventListener("click", () => setPipMode(true));
-  ui.exitPipBtn.addEventListener("click", () => setPipMode(false));
   ui.startBtn.addEventListener("click", startTimer);
   ui.pauseBtn.addEventListener("click", pauseTimer);
   ui.resetBtn.addEventListener("click", resetTimer);
@@ -514,17 +508,10 @@ function notify(title, body) {
 function setZenMode(enabled, syncFullscreen = true) {
   state.zenMode = enabled;
   document.body.classList.toggle("zen-mode", enabled);
-  if (!enabled) {
-    zenSource = "pomodoro";
-    if (state.pipMode) {
-      state.pipMode = false;
-      document.body.classList.remove("pip-mode");
-      if (window.desktopAPI?.setPipMode) window.desktopAPI.setPipMode(false);
-    }
-  }
+  if (!enabled) zenSource = "pomodoro";
   ui.zenBtn.textContent = enabled ? "Exit Focus View" : "Focus View";
 
-  if (syncFullscreen && !state.pipMode) {
+  if (syncFullscreen) {
     if (enabled && !document.fullscreenElement) {
       document.documentElement.requestFullscreen?.().catch(() => {});
     }
@@ -532,22 +519,6 @@ function setZenMode(enabled, syncFullscreen = true) {
       document.exitFullscreen?.().catch(() => {});
     }
   }
-}
-
-
-async function setPipMode(enabled) {
-  state.pipMode = enabled;
-  document.body.classList.toggle("pip-mode", enabled);
-  if (window.desktopAPI?.setPipMode) {
-    await window.desktopAPI.setPipMode(enabled);
-  }
-  if (enabled) {
-    if (ui.settingsDialog.open) ui.settingsDialog.close();
-    setZenMode(true, false);
-  } else {
-    setZenMode(false, false);
-  }
-  renderZenOverlay();
 }
 
 function toggleZenMode() {
@@ -835,8 +806,6 @@ function renderZenOverlay() {
   const p = getProject();
   const r = Number(ui.ringProgress.getAttribute("r"));
   const c = 2 * Math.PI * r;
-
-  ui.exitPipBtn.style.display = state.pipMode ? "" : "none";
 
   if (zenSource === "utilityTimer") {
     ui.zenSessionLabel.textContent = "Countdown Timer";
