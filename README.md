@@ -31,3 +31,9 @@ If no exe is present, the app will say:
 2. In Settings > Updates, click **Reset Local Data** if needed.
 3. Close old app instances.
 4. Run newest exe from `dist/` or Downloads.
+
+## Version sync safety
+
+- `package.json` is now the source of truth for the build version.
+- Run `npm run sync:version` to sync `app.js` + `README.md` to the package version.
+- `npm run pack:win` runs this sync automatically before building.
