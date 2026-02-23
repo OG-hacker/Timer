@@ -1,12 +1,16 @@
 {
   "name": "something-to-focus",
-  "version": "5.5.0",
+  "version": "5.8.0",
   "description": "Aesthetic offline Pomodoro productivity desktop app",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "pack:win": "npm run pack:portable",
-    "pack:portable": "electron-builder --win portable"
+    "pack:portable": "electron-builder --win portable",
+    "sync:version": "node scripts/sync-version.js",
+    "check:version": "node scripts/sync-version.js --check",
+    "prepack:portable": "npm run sync:version",
+    "prepack:win": "npm run sync:version"
   },
   "devDependencies": {
     "electron": "^31.7.7",
@@ -20,7 +24,8 @@
       "styles.css",
       "app.js",
       "main.js",
-      "package.json"
+      "package.json",
+      "preload.js"
     ],
     "win": {
       "target": [
