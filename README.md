@@ -1,22 +1,20 @@
-# Something to Focus (Build v5.7.0)
+# Something to Focus (Build v5.5.0)
 
 ## What changed in this build
 
-- Fixed in-app updater so it targets runnable Windows **.exe** assets only.
-- Updater now **downloads the latest exe to your Downloads folder and opens it directly** (desktop app mode).
-- Improved error text to explain when a release does not contain a runnable exe.
-- Kept PiP Focus mode, full-screen focus mode, utilities, themes, and settings tabs.
-
-## In-app updater requirements
-
-Your GitHub Release must include at least one Windows `.exe` asset (portable exe recommended).
-
-If no exe is present, the app now clearly says:
-- `No runnable Windows .exe found in latest release...`
+- Added a cleaner **Settings Menu** with categorized tabs:
+  - Appearance
+  - Timer
+  - Goals
+  - Updates
+  - Utilities
+- Added **Countdown Timer** utility and **Stopwatch** utility.
+- New behavior: while Countdown/Stopwatch is running, you can enable **Focus View** and control them inside fullscreen mode.
+- Kept in-app EXE downloader, editable update fields, 9 themes, Pomodoro, projects/tasks, stats, and daily goals.
 
 ## Stale build troubleshooting
 
-1. Confirm badge shows **Build v5.7.0**.
-2. In Settings > Updates, use **Reset Local Data** if needed.
+1. Confirm badge shows **Build v5.5.0**.
+2. Open **Settings > Updates** and use **Reset Local Data** if needed.
 3. Close old app instances.
-4. Run newest exe from `dist/` or Downloads.
+4. Run newest exe from `dist/`.
